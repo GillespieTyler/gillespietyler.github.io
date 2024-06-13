@@ -3,89 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Cyberpunk Website</title>
+    <title>Play Tic Tac Toe to Enter</title>
     <style>
         body {
-            font-family: 'Courier New', Courier, monospace;
-            background-color: #000;
-            color: #0f0;
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        header {
-            background-color: #000;
-            color: #0f0;
-            text-align: center;
-            padding: 20px 0;
-            border-bottom: 1px solid #0f0;
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             align-items: center;
+            height: 100vh;
+            font-family: Arial, sans-serif;
         }
-        .logo {
-            width: 150px;
-            height: auto;
-            margin-left: 20px;
-            filter: drop-shadow(0px 0px 10px #0f0);
+        #game {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-gap: 5px;
         }
-        nav ul {
-            list-style-type: none;
-            padding: 0;
+        .cell {
+            width: 100px;
+            height: 100px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2em;
+            background-color: #f0f0f0;
+            cursor: pointer;
+        }
+        #message {
+            margin-top: 20px;
             text-align: center;
         }
-        nav ul li {
-            display: inline;
-            margin: 0 10px;
-        }
-        nav ul li a {
-            text-decoration: none;
-            color: #0f0;
-            border-bottom: 1px solid transparent;
-            transition: border-bottom 0.3s;
-        }
-        nav ul li a:hover {
-            border-bottom: 1px solid #0f0;
-        }
-        section {
-            padding: 20px;
-            text-align: center;
-        }
-        footer {
-            background-color: #000;
-            color: #0f0;
-            text-align: center;
-            padding: 10px 0;
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-            border-top: 1px solid #0f0;
+        #mainContent {
+            display: none;
         }
     </style>
 </head>
 <body>
 
-<header>
-    <img src="C:\Users\tyler\Downloads\output-onlinegiftools.gif" alt="Cyberpunk Logo" class="logo">
-    <h1>My Cyberpunk Website</h1>
-    <nav>
-        <ul>
-            <li><a href="#">Home</a></li>
-            <li><a href="#">About</a></li>
-            <li><a href="#">Services</a></li>
-            <li><a href="#">Contact</a></li>
-        </ul>
-    </nav>
-</header>
+<div id="game">
+    <div class="cell" data-index="0"></div>
+    <div class="cell" data-index="1"></div>
+    <div class="cell" data-index="2"></div>
+    <div class="cell" data-index="3"></div>
+    <div class="cell" data-index="4"></div>
+    <div class="cell" data-index="5"></div>
+    <div class="cell" data-index="6"></div>
+    <div class="cell" data-index="7"></div>
+    <div class="cell" data-index="8"></div>
+</div>
+<div id="message"></div>
 
-<section>
-    <h2>Welcome to my cyberpunk website!</h2>
-    <p>This is a simple starter website with a 90s cyberpunk aesthetic.</p>
-</section>
+<div id="mainContent">
+    <h1>Welcome to the Website!</h1>
+    <p>This is the main content of the website.</p>
+</div>
 
-<footer>
-    <p>&copy; 2024 My Cyberpunk Website. All rights reserved.</p>
-</footer>
+<script>
+    const cells = document.querySelectorAll('.cell');
+    const messageDiv = document.getElementById('message');
+    const mainContent = document.getElementById('mainContent');
+    let currentPlayer = 'X';
+    const board = Array(9).fill(null);
+
+    cells.forEach(cell => {
+        cell.addEventListener('click', handleCellClick);
+    });
+
+    function handleCellClick(e) {
+        const index = e.target.dataset.index;
+        if (board[index] || checkWinner(board)) return;
+        board[index] = currentPlayer;
+        e.target.textContent = currentPlayer;
+        if (checkWinner(board)) {
+            messageDiv.textContent = `${currentPlayer} wins!`;
+            if (currentPlayer === 'X') {
+                mainContent.style.display = 'block';
+            }
+            return;
+        }
+        currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+        if (currentPlayer === 'O') {
+            botMove();
+        }
+    }
+
+    function botMove() {
+        let availableIndices = board.map((value, index) => value === null ? index : null).filter(v => v !== null);
+        let randomIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
+        board[randomIndex] = 'O';
+        cells[randomIndex].textContent = 'O';
+        if (checkWinner(board)) {
+            messageDiv.textContent = 'O wins!';
+        }
+        currentPlayer = 'X';
+    }
+
+    function checkWinner(board) {
+        const winPatterns = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8],
+            [0, 3, 6], [1, 4, 7], [2, 5, 8],
+            [0, 4, 8], [2, 4, 6]
+        ];
+        for (let pattern of winPatterns) {
+            const [a, b, c] = pattern;
+            if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+                return true;
+            }
+        }
+        return false;
+    }
+</script>
 
 </body>
 </html>
