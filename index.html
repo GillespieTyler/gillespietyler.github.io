@@ -86,10 +86,9 @@
     }
 
     function botMove() {
-        let availableIndices = board.map((value, index) => value === null ? index : null).filter(v => v !== null);
-        let randomIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
-        board[randomIndex] = 'O';
-        cells[randomIndex].textContent = 'O';
+        const bestMove = minimax(board, 'O').index;
+        board[bestMove] = 'O';
+        cells[bestMove].textContent = 'O';
         if (checkWinner(board)) {
             messageDiv.textContent = 'O wins!';
         }
@@ -109,6 +108,57 @@
             }
         }
         return false;
+    }
+
+    function minimax(newBoard, player) {
+        const availSpots = newBoard.filter(s => s === null);
+
+        if (checkWinner(newBoard)) {
+            return { score: -10 };
+        } else if (checkWinner(newBoard.map(s => s === 'X' ? 'O' : s === 'O' ? 'X' : s))) {
+            return { score: 10 };
+        } else if (availSpots.length === 0) {
+            return { score: 0 };
+        }
+
+        const moves = [];
+        for (let i = 0; i < availSpots.length; i++) {
+            const move = {};
+            move.index = newBoard.indexOf(availSpots[i]);
+            newBoard[move.index] = player;
+
+            if (player === 'O') {
+                const result = minimax(newBoard, 'X');
+                move.score = result.score;
+            } else {
+                const result = minimax(newBoard, 'O');
+                move.score = result.score;
+            }
+
+            newBoard[move.index] = null;
+            moves.push(move);
+        }
+
+        let bestMove;
+        if (player === 'O') {
+            let bestScore = -10000;
+            for (let i = 0; i < moves.length; i++) {
+                if (moves[i].score > bestScore) {
+                    bestScore = moves[i].score;
+                    bestMove = i;
+                }
+            }
+        } else {
+            let bestScore = 10000;
+            for (let i = 0; i < moves.length; i++) {
+                if (moves[i].score < bestScore) {
+                    bestScore = moves[i].score;
+                    bestMove = i;
+                }
+            }
+        }
+
+        return moves[bestMove];
     }
 </script>
 
