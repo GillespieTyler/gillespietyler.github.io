@@ -3,163 +3,145 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Play Tic Tac Toe to Enter</title>
+    <title>Tetris Game</title>
     <style>
         body {
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
+            background-color: #333;
+            color: white;
             font-family: Arial, sans-serif;
         }
-        #game {
+        #tetris {
             display: grid;
-            grid-template-columns: repeat(3, 100px);
-            grid-gap: 5px;
+            grid-template-rows: repeat(20, 30px);
+            grid-template-columns: repeat(10, 30px);
+            gap: 1px;
+            background-color: #444;
         }
         .cell {
-            width: 100px;
-            height: 100px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 2em;
+            width: 30px;
+            height: 30px;
+            background-color: #555;
+        }
+        .filled {
             background-color: #f0f0f0;
-            cursor: pointer;
-        }
-        #message {
-            margin-top: 20px;
-            text-align: center;
-        }
-        #mainContent {
-            display: none;
         }
     </style>
 </head>
 <body>
 
-<div id="game">
-    <div class="cell" data-index="0"></div>
-    <div class="cell" data-index="1"></div>
-    <div class="cell" data-index="2"></div>
-    <div class="cell" data-index="3"></div>
-    <div class="cell" data-index="4"></div>
-    <div class="cell" data-index="5"></div>
-    <div class="cell" data-index="6"></div>
-    <div class="cell" data-index="7"></div>
-    <div class="cell" data-index="8"></div>
-</div>
-<div id="message"></div>
-
-<div id="mainContent">
-    <h1>Welcome to the Website!</h1>
-    <p>This is the main content of the website.</p>
-</div>
+<div id="tetris"></div>
 
 <script>
-    const cells = document.querySelectorAll('.cell');
-    const messageDiv = document.getElementById('message');
-    const mainContent = document.getElementById('mainContent');
-    let currentPlayer = 'X';
-    const board = Array(9).fill(null);
+    const tetris = document.getElementById('tetris');
+    const width = 10;
+    const height = 20;
+    const cells = [];
 
-    cells.forEach(cell => {
-        cell.addEventListener('click', handleCellClick);
-    });
+    for (let i = 0; i < width * height; i++) {
+        const cell = document.createElement('div');
+        cell.classList.add('cell');
+        tetris.appendChild(cell);
+        cells.push(cell);
+    }
 
-    function handleCellClick(e) {
-        const index = e.target.dataset.index;
-        if (board[index] || checkWinner(board)) return;
-        board[index] = currentPlayer;
-        e.target.textContent = currentPlayer;
-        if (checkWinner(board)) {
-            messageDiv.textContent = `${currentPlayer} wins!`;
-            if (currentPlayer === 'X') {
-                mainContent.style.display = 'block';
-            }
-            return;
-        }
-        currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
-        if (currentPlayer === 'O') {
-            botMove();
+    const colors = [
+        'red', 'blue', 'green', 'purple', 'orange'
+    ];
+
+    const tetrominoes = [
+        [1, width+1, width*2+1, 2], // L
+        [0, width, width+1, width*2+1], // Z
+        [1, width, width+1, width+2], // T
+        [0, 1, width, width+1], // O
+        [1, width+1, width*2+1, width*3+1] // I
+    ];
+
+    let currentPosition = 4;
+    let currentRotation = 0;
+    let random = Math.floor(Math.random() * tetrominoes.length);
+    let current = tetrominoes[random];
+
+    function draw() {
+        current.forEach(index => {
+            cells[currentPosition + index].classList.add('filled');
+            cells[currentPosition + index].style.backgroundColor = colors[random];
+        });
+    }
+
+    function undraw() {
+        current.forEach(index => {
+            cells[currentPosition + index].classList.remove('filled');
+            cells[currentPosition + index].style.backgroundColor = '';
+        });
+    }
+
+    function moveDown() {
+        undraw();
+        currentPosition += width;
+        draw();
+        freeze();
+    }
+
+    function freeze() {
+        if (current.some(index => cells[currentPosition + index + width].classList.contains('filled'))) {
+            current.forEach(index => cells[currentPosition + index].classList.add('taken'));
+            random = Math.floor(Math.random() * tetrominoes.length);
+            current = tetrominoes[random];
+            currentPosition = 4;
+            draw();
         }
     }
 
-    function botMove() {
-        const bestMove = minimax(board, 'O').index;
-        board[bestMove] = 'O';
-        cells[bestMove].textContent = 'O';
-        if (checkWinner(board)) {
-            messageDiv.textContent = 'O wins!';
+    function moveLeft() {
+        undraw();
+        const isAtLeftEdge = current.some(index => (currentPosition + index) % width === 0);
+        if (!isAtLeftEdge) currentPosition -= 1;
+        if (current.some(index => cells[currentPosition + index].classList.contains('taken'))) {
+            currentPosition += 1;
         }
-        currentPlayer = 'X';
+        draw();
     }
 
-    function checkWinner(board) {
-        const winPatterns = [
-            [0, 1, 2], [3, 4, 5], [6, 7, 8],
-            [0, 3, 6], [1, 4, 7], [2, 5, 8],
-            [0, 4, 8], [2, 4, 6]
-        ];
-        for (let pattern of winPatterns) {
-            const [a, b, c] = pattern;
-            if (board[a] && board[a] === board[b] && board[a] === board[c]) {
-                return true;
-            }
+    function moveRight() {
+        undraw();
+        const isAtRightEdge = current.some(index => (currentPosition + index) % width === width - 1);
+        if (!isAtRightEdge) currentPosition += 1;
+        if (current.some(index => cells[currentPosition + index].classList.contains('taken'))) {
+            currentPosition -= 1;
         }
-        return false;
+        draw();
     }
 
-    function minimax(newBoard, player) {
-        const availSpots = newBoard.filter(s => s === null);
-
-        if (checkWinner(newBoard)) {
-            return { score: -10 };
-        } else if (checkWinner(newBoard.map(s => s === 'X' ? 'O' : s === 'O' ? 'X' : s))) {
-            return { score: 10 };
-        } else if (availSpots.length === 0) {
-            return { score: 0 };
+    function rotate() {
+        undraw();
+        currentRotation++;
+        if (currentRotation === current.length) {
+            currentRotation = 0;
         }
-
-        const moves = [];
-        for (let i = 0; i < availSpots.length; i++) {
-            const move = {};
-            move.index = newBoard.indexOf(availSpots[i]);
-            newBoard[move.index] = player;
-
-            if (player === 'O') {
-                const result = minimax(newBoard, 'X');
-                move.score = result.score;
-            } else {
-                const result = minimax(newBoard, 'O');
-                move.score = result.score;
-            }
-
-            newBoard[move.index] = null;
-            moves.push(move);
-        }
-
-        let bestMove;
-        if (player === 'O') {
-            let bestScore = -10000;
-            for (let i = 0; i < moves.length; i++) {
-                if (moves[i].score > bestScore) {
-                    bestScore = moves[i].score;
-                    bestMove = i;
-                }
-            }
-        } else {
-            let bestScore = 10000;
-            for (let i = 0; i < moves.length; i++) {
-                if (moves[i].score < bestScore) {
-                    bestScore = moves[i].score;
-                    bestMove = i;
-                }
-            }
-        }
-
-        return moves[bestMove];
+        current = tetrominoes[random][currentRotation];
+        draw();
     }
+
+    document.addEventListener('keydown', control);
+
+    function control(e) {
+        if (e.keyCode === 37) {
+            moveLeft();
+        } else if (e.keyCode === 38) {
+            rotate();
+        } else if (e.keyCode === 39) {
+            moveRight();
+        } else if (e.keyCode === 40) {
+            moveDown();
+        }
+    }
+
+    draw();
+    setInterval(moveDown, 1000);
 </script>
 
 </body>
